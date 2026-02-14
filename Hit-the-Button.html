@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>School Maths Platform - Hidden Group Code</title>
+<title>School Maths Platform - Questions</title>
 <style>
 body{font-family:Arial;text-align:center;background:linear-gradient(135deg,#4facfe,#00f2fe);margin:0;color:white;}
 .login-box{display:inline-block;background:rgba(255,255,255,0.9);color:black;padding:20px;margin:15px;border-radius:12px;vertical-align:top;}
@@ -10,158 +10,136 @@ input, button{padding:6px;margin:5px;}
 button{border:none;border-radius:6px;cursor:pointer;}
 h2{margin-top:0;}
 ul{list-style:none;padding:0;}
-#yearSelection{display:none;}
-.year-btn{display:inline-block;margin:5px;padding:10px 15px;background:#ffcc00;color:black;border-radius:6px;cursor:pointer;}
+#yearSelection, #questionArea{display:none;}
+.answer-btn{display:block;margin:10px auto;padding:10px 20px;background:#ffcc00;color:black;border-radius:6px;cursor:pointer;width:200px;}
 </style>
 </head>
 <body>
 
 <h1>🏫 School Maths Platform</h1>
-<p>Log in with your role</p>
-
-<!-- LOGIN BOXES -->
-<div class="login-box" id="headLogin">
-  <h2>Headteacher</h2>
-  <input id="headSchool" placeholder="School Name"><br>
-  <input id="headUser" placeholder="Username"><br>
-  <input id="headPass" type="password" placeholder="Password"><br>
-  <button onclick="loginHead()">Login</button>
-  <p id="headMsg"></p>
-</div>
-
-<div class="login-box" id="teacherLogin">
-  <h2>Teacher</h2>
-  <input id="teacherSchool" placeholder="School Name"><br>
-  <input id="teacherClass" placeholder="Class Code"><br>
-  <input id="teacherUser" placeholder="Username"><br>
-  <input id="teacherPass" type="password" placeholder="Password"><br>
-  <button onclick="loginTeacher()">Login</button>
-  <p id="teacherMsg"></p>
-</div>
-
-<div class="login-box" id="studentLogin">
-  <h2>Student</h2>
-  <input id="studentClass" placeholder="Class Code"><br>
-  <button onclick="loginStudent()">Login</button>
-  <p id="studentMsg"></p>
-</div>
-
-<div class="login-box" id="groupAdminLogin">
-  <h2>Group Admin / Friends</h2>
-  <input id="groupUser" placeholder="Username"><br>
-  <input id="groupCode" type="password" placeholder="Enter Group Code"><br>
-  <button onclick="loginGroup()">Login</button>
-  <p id="groupMsg"></p>
-</div>
-
-<!-- DASHBOARD -->
-<div id="dashboard" class="login-box" style="display:none;">
-  <h2 id="dashboardTitle"></h2>
-  <p id="dashboardContent"></p>
-  <button onclick="play()">Play</button>
-  <br><br>
-  <button onclick="logout()">Logout</button>
-</div>
 
 <!-- YEAR SELECTION -->
 <div id="yearSelection" class="login-box">
   <h2>Select Your Year Group</h2>
   <div id="yearButtons"></div>
-  <br>
-  <button onclick="backToDashboard()">Back</button>
+</div>
+
+<!-- QUESTION AREA -->
+<div id="questionArea" class="login-box">
+  <h2 id="questionTitle"></h2>
+  <div id="answerButtons"></div>
+  <p id="questionProgress"></p>
+  <button onclick="restart()">Restart</button>
+  <button onclick="continueQuestions()">Continue</button>
 </div>
 
 <script>
 // ===== GLOBALS =====
-const groupCode = "A6MIN"; // Hidden: users must know this
-let friendList = JSON.parse(localStorage.getItem("groupFriends") || '["admin"]');
-let currentRole = null;
+let yearGroup = "";
+let questions = [];
+let currentQuestionIndex = 0;
+let questionBatch = 1; // batch of 10 questions
+let completedQuestions = 0;
 
-// ===== LOGIN FUNCTIONS =====
-function loginHead(){
-  let school = document.getElementById("headSchool").value.trim();
-  let user = document.getElementById("headUser").value.trim();
-  let pass = document.getElementById("headPass").value;
-  if(!school || !user || !pass){ document.getElementById("headMsg").innerText="Enter all fields"; return; }
-  currentRole = "Headteacher";
-  showDashboard("Headteacher Dashboard", "Welcome, "+user+" from "+school+"!");
+// ===== YEAR SELECTION =====
+const years = ["Year 1","Year 2","Year 3","Year 4","Year 5","Year 6"];
+const yearContainer = document.getElementById("yearButtons");
+years.forEach(y=>{
+  const btn = document.createElement("button");
+  btn.innerText = y;
+  btn.onclick = ()=>startYear(y);
+  yearContainer.appendChild(btn);
+});
+
+// ===== START YEAR =====
+function startYear(year){
+  yearGroup = year;
+  document.getElementById("yearSelection").style.display="none";
+  document.getElementById("questionArea").style.display="block";
+  completedQuestions = 0;
+  questionBatch = 1;
+  loadQuestions();
+  showQuestion();
 }
 
-function loginTeacher(){
-  let school = document.getElementById("teacherSchool").value.trim();
-  let cls = document.getElementById("teacherClass").value.trim();
-  let user = document.getElementById("teacherUser").value.trim();
-  let pass = document.getElementById("teacherPass").value;
-  if(!school || !cls || !user || !pass){ document.getElementById("teacherMsg").innerText="Enter all fields"; return; }
-  currentRole = "Teacher";
-  showDashboard("Teacher Dashboard", "Welcome, "+user+" teaching class "+cls+" at "+school+"!");
+// ===== LOAD QUESTIONS =====
+function loadQuestions(){
+  // Example: For demo purposes we create simple questions per year
+  const yearNum = parseInt(yearGroup.split(" ")[1]);
+  questions = [];
+  for(let i=0;i<10;i++){
+    let a = Math.floor(Math.random()*10*yearNum);
+    let b = Math.floor(Math.random()*10*yearNum);
+    questions.push({
+      q: `${a} + ${b} = ?`,
+      correct: a+b,
+      answers: shuffle([a+b, a+b+1, a+b-1, a+b+2])
+    });
+  }
 }
 
-function loginStudent(){
-  let cls = document.getElementById("studentClass").value.trim();
-  if(!cls){ document.getElementById("studentMsg").innerText="Enter class code"; return; }
-  currentRole = "Student";
-  showDashboard("Student Dashboard", "Welcome to class "+cls+"!");
-}
-
-function loginGroup(){
-  let user = document.getElementById("groupUser").value.trim();
-  let code = document.getElementById("groupCode").value.trim().toUpperCase();
-  if(code !== groupCode){ document.getElementById("groupMsg").innerText="Invalid group code"; return; }
-  if(user && !friendList.includes(user)) friendList.push(user);
-  localStorage.setItem("groupFriends", JSON.stringify(friendList));
-  currentRole = "GroupAdmin";
-  showDashboard("Group Admin Dashboard", "Welcome, "+user+"! Friends: "+friendList.join(", "));
-}
-
-// ===== DASHBOARD =====
-function showDashboard(title, content){
-  document.getElementById("headLogin").style.display="none";
-  document.getElementById("teacherLogin").style.display="none";
-  document.getElementById("studentLogin").style.display="none";
-  document.getElementById("groupAdminLogin").style.display="none";
-  document.getElementById("dashboard").style.display="block";
-  document.getElementById("dashboardTitle").innerText = title;
-  document.getElementById("dashboardContent").innerText = content;
-}
-
-// ===== PLAY BUTTON =====
-function play(){
-  document.getElementById("dashboard").style.display="none";
-  document.getElementById("yearSelection").style.display="block";
-  const years = ["Year 1","Year 2","Year 3","Year 4","Year 5","Year 6"];
-  const container = document.getElementById("yearButtons");
+// ===== SHOW QUESTION =====
+function showQuestion(){
+  if(currentQuestionIndex >= questions.length){
+    document.getElementById("questionTitle").innerText="Batch Complete!";
+    document.getElementById("answerButtons").innerHTML="";
+    return;
+  }
+  const q = questions[currentQuestionIndex];
+  document.getElementById("questionTitle").innerText=q.q;
+  const container = document.getElementById("answerButtons");
   container.innerHTML="";
-  years.forEach(y=>{
-    const btn = document.createElement("div");
-    btn.className="year-btn";
-    btn.innerText=y;
-    btn.onclick=()=>alert("Selected "+y+" — here start the maths game!");
+  q.answers.forEach(a=>{
+    const btn = document.createElement("button");
+    btn.className="answer-btn";
+    btn.innerText=a;
+    btn.onclick = ()=>answerQuestion(a);
     container.appendChild(btn);
   });
+  document.getElementById("questionProgress").innerText=`Question ${currentQuestionIndex+1} of ${questions.length} (Batch ${questionBatch})`;
 }
 
-// ===== BACK BUTTON =====
-function backToDashboard(){
-  document.getElementById("yearSelection").style.display="none";
-  document.getElementById("dashboard").style.display="block";
+// ===== ANSWER QUESTION =====
+function answerQuestion(ans){
+  const q = questions[currentQuestionIndex];
+  if(ans === q.correct){
+    completedQuestions++;
+  }
+  currentQuestionIndex++;
+  showQuestion();
 }
 
-// ===== LOGOUT =====
-function logout(){
-  currentRole=null;
-  document.getElementById("headLogin").style.display="inline-block";
-  document.getElementById("teacherLogin").style.display="inline-block";
-  document.getElementById("studentLogin").style.display="inline-block";
-  document.getElementById("groupAdminLogin").style.display="inline-block";
-  document.getElementById("dashboard").style.display="none";
-  document.getElementById("yearSelection").style.display="none";
-  document.getElementById("headMsg").innerText="";
-  document.getElementById("teacherMsg").innerText="";
-  document.getElementById("studentMsg").innerText="";
-  document.getElementById("groupMsg").innerText="";
+// ===== CONTINUE & RESTART =====
+function continueQuestions(){
+  if(currentQuestionIndex >= questions.length){
+    questionBatch++;
+    currentQuestionIndex=0;
+    loadQuestions();
+    showQuestion();
+  }
 }
+
+function restart(){
+  currentQuestionIndex=0;
+  questionBatch=1;
+  completedQuestions=0;
+  loadQuestions();
+  showQuestion();
+}
+
+// ===== HELPER =====
+function shuffle(array){
+  for(let i=array.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [array[i],array[j]]=[array[j],array[i]];
+  }
+  return array;
+}
+
+// ===== INITIAL DISPLAY =====
+document.getElementById("yearSelection").style.display="block";
 </script>
 
 </body>
 </html>
+
