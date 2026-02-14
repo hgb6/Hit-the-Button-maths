@@ -2,16 +2,16 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>School Maths Platform - Questions</title>
+<title>School Maths Platform - Previous Button</title>
 <style>
 body{font-family:Arial;text-align:center;background:linear-gradient(135deg,#4facfe,#00f2fe);margin:0;color:white;}
 .login-box{display:inline-block;background:rgba(255,255,255,0.9);color:black;padding:20px;margin:15px;border-radius:12px;vertical-align:top;}
-input, button{padding:6px;margin:5px;}
+button, input{padding:6px;margin:5px;}
 button{border:none;border-radius:6px;cursor:pointer;}
 h2{margin-top:0;}
-ul{list-style:none;padding:0;}
 #yearSelection, #questionArea{display:none;}
-.answer-btn{display:block;margin:10px auto;padding:10px 20px;background:#ffcc00;color:black;border-radius:6px;cursor:pointer;width:200px;}
+.year-btn,.answer-btn{display:block;margin:10px auto;padding:10px 20px;background:#ffcc00;color:black;border-radius:6px;cursor:pointer;width:200px;}
+.nav-btn{background:#888;color:white;}
 </style>
 </head>
 <body>
@@ -22,6 +22,7 @@ ul{list-style:none;padding:0;}
 <div id="yearSelection" class="login-box">
   <h2>Select Your Year Group</h2>
   <div id="yearButtons"></div>
+  <button class="nav-btn" onclick="prevYear()">Previous</button>
 </div>
 
 <!-- QUESTION AREA -->
@@ -29,6 +30,7 @@ ul{list-style:none;padding:0;}
   <h2 id="questionTitle"></h2>
   <div id="answerButtons"></div>
   <p id="questionProgress"></p>
+  <button onclick="prevBatch()" class="nav-btn">Previous Batch</button>
   <button onclick="restart()">Restart</button>
   <button onclick="continueQuestions()">Continue</button>
 </div>
@@ -36,35 +38,37 @@ ul{list-style:none;padding:0;}
 <script>
 // ===== GLOBALS =====
 let yearGroup = "";
+let yearIndex = 0;
+let years = ["Year 1","Year 2","Year 3","Year 4","Year 5","Year 6"];
 let questions = [];
 let currentQuestionIndex = 0;
-let questionBatch = 1; // batch of 10 questions
+let questionBatch = 1;
 let completedQuestions = 0;
 
-// ===== YEAR SELECTION =====
-const years = ["Year 1","Year 2","Year 3","Year 4","Year 5","Year 6"];
+// ===== YEAR SELECTION BUTTONS =====
 const yearContainer = document.getElementById("yearButtons");
-years.forEach(y=>{
+years.forEach((y,i)=>{
   const btn = document.createElement("button");
   btn.innerText = y;
-  btn.onclick = ()=>startYear(y);
+  btn.onclick = ()=>startYear(i);
   yearContainer.appendChild(btn);
 });
 
 // ===== START YEAR =====
-function startYear(year){
-  yearGroup = year;
+function startYear(index){
+  yearIndex = index;
+  yearGroup = years[yearIndex];
   document.getElementById("yearSelection").style.display="none";
   document.getElementById("questionArea").style.display="block";
   completedQuestions = 0;
   questionBatch = 1;
+  currentQuestionIndex=0;
   loadQuestions();
   showQuestion();
 }
 
 // ===== LOAD QUESTIONS =====
 function loadQuestions(){
-  // Example: For demo purposes we create simple questions per year
   const yearNum = parseInt(yearGroup.split(" ")[1]);
   questions = [];
   for(let i=0;i<10;i++){
@@ -83,6 +87,7 @@ function showQuestion(){
   if(currentQuestionIndex >= questions.length){
     document.getElementById("questionTitle").innerText="Batch Complete!";
     document.getElementById("answerButtons").innerHTML="";
+    document.getElementById("questionProgress").innerText=`Completed ${completedQuestions} correct answers`;
     return;
   }
   const q = questions[currentQuestionIndex];
@@ -102,9 +107,7 @@ function showQuestion(){
 // ===== ANSWER QUESTION =====
 function answerQuestion(ans){
   const q = questions[currentQuestionIndex];
-  if(ans === q.correct){
-    completedQuestions++;
-  }
+  if(ans === q.correct) completedQuestions++;
   currentQuestionIndex++;
   showQuestion();
 }
@@ -114,6 +117,7 @@ function continueQuestions(){
   if(currentQuestionIndex >= questions.length){
     questionBatch++;
     currentQuestionIndex=0;
+    completedQuestions=0;
     loadQuestions();
     showQuestion();
   }
@@ -127,19 +131,5 @@ function restart(){
   showQuestion();
 }
 
-// ===== HELPER =====
-function shuffle(array){
-  for(let i=array.length-1;i>0;i--){
-    const j=Math.floor(Math.random()*(i+1));
-    [array[i],array[j]]=[array[j],array[i]];
-  }
-  return array;
-}
-
-// ===== INITIAL DISPLAY =====
-document.getElementById("yearSelection").style.display="block";
-</script>
-
-</body>
-</html>
+// ===== P
 
